@@ -16,7 +16,7 @@ const registerUser = asyncHandler(async (req, res) => {
   //9. check for user creation.
   //10. return res
   const { username, email, fullname, password } = req.body;
-  console.log("\n email", email);
+  //console.log("\n email", email);
 
   if (
     [username, email, fullname, password].some((field) => field?.trim() === "")
@@ -25,7 +25,7 @@ const registerUser = asyncHandler(async (req, res) => {
   }
   // findone return the first encounter if exist
 
-  const existedUser = User.findOne(
+  const existedUser = await User.findOne(
     // this syntax is used for checking multiple
     {
       $or: [{ username }, { email }],
@@ -36,12 +36,18 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   const avatarLocalpath = req.files?.avatar[0]?.path;
-  const coverImageLocalpath = req.files?.coverImage[0]?.path;
+ // const coverImageLocalpath = req.files?.coverImage[0]?.path;
+
+ let coverImageLocalpath ;
+ if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length >0){
+coverImageLocalpath=req.files.coverImage[0].path
+ }
+  //console.log(avatarLocalpath);
   if (!avatarLocalpath) {
     throw new ApiError(400, "Avatar file is required");
   }
   const avatar = await uploadOnCloudinary(avatarLocalpath);
-  if (avatar) {
+  if (!avatar) {
     throw new ApiError(400, "Avatar file is required");
   }
   const coverImage = await uploadOnCloudinary(coverImageLocalpath);
@@ -63,8 +69,8 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(500, "something went wrong while registring");
   }
 
-  return res.status(201).json(
-    new  ApiResponse(200,createdUser,"User registered successfully")
-  )
+  return res
+    .status(201)
+    .json(new ApiResponse(200, createdUser, "User registered successfully"));
 });
 export { registerUser };
